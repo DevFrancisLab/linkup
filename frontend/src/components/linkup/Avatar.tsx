@@ -35,7 +35,7 @@ export function AvatarPlaceholder({
     <div
       aria-hidden="true"
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full font-semibold tracking-tight",
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold tracking-tight",
         "gradient-brand text-primary-foreground",
         ring && "ring-2 ring-card ring-offset-2 ring-offset-background",
         sizes[size],
@@ -43,7 +43,11 @@ export function AvatarPlaceholder({
       )}
     >
       {imageUrl ? (
-        <img src={imageUrl} alt="" className="size-full object-cover" />
+        <img
+          src={imageUrl}
+          alt=""
+          className="block size-full object-cover object-center"
+        />
       ) : (
         initials
       )}
