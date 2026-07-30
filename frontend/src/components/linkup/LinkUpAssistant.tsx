@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { ArrowUp, Search, Sparkles } from "lucide-react";
+import { ArrowUp, MessageCircle, Mic, Search, Sparkles } from "lucide-react";
 import {
   type FormEvent,
   useCallback,
@@ -14,9 +14,17 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { getApiErrors } from "@/services/auth";
 import { aiService } from "@/services/ai";
+import { aiConfig } from "@/config/ai";
+import { LinkUpAvatarAssistant } from "./LinkUpAvatarAssistant";
 
 const AI_SESSION_KEY = "linkup.ai-session-id";
 const SUGGESTIONS = [
@@ -43,7 +51,8 @@ const getStoredSessionId = () => {
 
 export function LinkUpAssistant() {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [sessionId, setSessionId] = useState(getStoredSessionId);
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
@@ -113,7 +122,7 @@ export function LinkUpAssistant() {
       const intention = (event as CustomEvent<{ intention?: string }>).detail
         ?.intention;
       if (!intention) return;
-      setOpen(true);
+      setChatOpen(true);
       runQuery(intention);
     };
 
@@ -123,19 +132,61 @@ export function LinkUpAssistant() {
   }, [runQuery]);
 
   return (
-    <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        className="gradient-brand fixed bottom-[calc(env(safe-area-inset-bottom)+6rem)] right-5 z-40 inline-flex min-h-14 items-center gap-2.5 overflow-hidden rounded-full px-5 font-display text-sm font-semibold text-primary-foreground shadow-[0_8px_16px_oklch(0.21_0.035_258_/_0.16),0_20px_40px_-14px_oklch(0.546_0.215_262.9_/_0.62)] transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none hover:-translate-y-1 hover:shadow-[0_10px_20px_oklch(0.21_0.035_258_/_0.2),0_24px_44px_-14px_oklch(0.546_0.215_262.9_/_0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.97]"
-      >
-        <span className="absolute inset-0 bg-card/20 opacity-0 transition-opacity duration-200 active:opacity-100" />
-        <Sparkles className="relative size-5" aria-hidden="true" />
-        <span className="relative">Ask LinkUp</span>
-      </button>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            aria-label="Open LinkUp AI options"
+            className="gradient-brand fixed bottom-[calc(env(safe-area-inset-bottom)+6rem)] right-5 z-40 inline-flex min-h-14 items-center gap-2.5 overflow-hidden rounded-full px-5 font-display text-sm font-semibold text-primary-foreground shadow-[0_8px_16px_oklch(0.21_0.035_258_/_0.16),0_20px_40px_-14px_oklch(0.546_0.215_262.9_/_0.62)] transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none hover:-translate-y-1 hover:shadow-[0_10px_20px_oklch(0.21_0.035_258_/_0.2),0_24px_44px_-14px_oklch(0.546_0.215_262.9_/_0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.97]"
+          >
+            <span className="absolute inset-0 bg-card/20 opacity-0 transition-opacity duration-200 active:opacity-100" />
+            <Sparkles className="relative size-5" aria-hidden="true" />
+            <span className="relative">Ask LinkUp</span>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          side="top"
+          align="end"
+          sideOffset={12}
+          className="z-50 w-68 rounded-2xl border-border/70 bg-card p-2 shadow-[0_18px_42px_-18px_oklch(0.21_0.035_258_/_0.34)]"
+        >
+          <DropdownMenuItem
+            onSelect={() => setChatOpen(true)}
+            className="min-h-14 cursor-pointer rounded-xl px-3 focus:bg-primary/8"
+          >
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <MessageCircle className="size-4" aria-hidden="true" />
+            </span>
+            <span>
+              <span className="block font-display text-sm font-semibold text-foreground">
+                Chat with LinkUp AI
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                Ask a networking question
+              </span>
+            </span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => setAvatarOpen(true)}
+            className="mt-1 min-h-14 cursor-pointer rounded-xl px-3 focus:bg-secondary/10"
+          >
+            <span className="flex size-9 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
+              <Mic className="size-4" aria-hidden="true" />
+            </span>
+            <span>
+              <span className="block font-display text-sm font-semibold text-foreground">
+                Talk with LinkUp Avatar
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                A guided voice experience
+              </span>
+            </span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
+      <Drawer open={chatOpen} onOpenChange={setChatOpen} shouldScaleBackground>
       <DrawerContent className="z-50 mx-auto h-[75dvh] max-w-md rounded-t-[2rem] border-border/70 bg-background shadow-[0_-16px_48px_oklch(0.21_0.035_258_/_0.18)]">
         <DrawerHeader className="px-5 pb-3 pt-4 text-left">
           <DrawerTitle className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight text-foreground">
@@ -234,7 +285,13 @@ export function LinkUpAssistant() {
           </div>
         </form>
       </DrawerContent>
-    </Drawer>
+      </Drawer>
+      <LinkUpAvatarAssistant
+        open={avatarOpen}
+        onOpenChange={setAvatarOpen}
+        avatarUrl={aiConfig.avatarUrl}
+      />
+    </>
   );
 }
 

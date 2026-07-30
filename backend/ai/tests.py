@@ -58,7 +58,7 @@ class AIResponseTests(APITestCase):
         self.assertNotIn("phone", context["event_attendees"][0])
         self.assertEqual(build_assistant_context(user)["selected_event"]["id"], event.id)
 
-    def test_recommends_real_ai_founders_without_calling_groq(self):
+    def test_passes_real_attendee_context_to_groq(self):
         context = {
             "user": {"username": "sam", "interests": ["AI"], "looking_for": []},
             "selected_event": {"title": "Builder Meetup"},
@@ -76,21 +76,78 @@ class AIResponseTests(APITestCase):
         }
 
         with patch("ai.services.assistant_service.generate_chat_completion") as groq_mock:
+            groq_mock.return_value = json.dumps(
+                {
+                    "reply": "Meet Amina Noor from Nia Labs.",
+                    "suggestions": ["Who else should I meet?"],
+                    "confidence": 0.9,
+                }
+            )
             response = respond_to_assistant_request(context, [], "Find AI founders")
 
         self.assertIn("Amina Noor", response["reply"])
-        groq_mock.assert_not_called()
+        groq_mock.assert_called_once()
+        self.assertIn("Amina Noor", groq_mock.call_args.args[0][1]["content"])
 
-    def test_explains_when_availability_data_is_missing(self):
+    def test_uses_groq_when_application_data_is_missing(self):
         context = {
             "user": {"username": "sam", "interests": [], "looking_for": []},
             "selected_event": None,
             "event_attendees": [],
         }
 
-        response = respond_to_assistant_request(context, [], "Who wants coffee?")
+        with patch("ai.services.assistant_service.generate_chat_completion") as groq_mock:
+            groq_mock.return_value = json.dumps(
+                {
+                    "reply": "LinkUp does not have coffee availability data yet.",
+                    "suggestions": [],
+                    "confidence": 0.9,
+                }
+            )
+            response = respond_to_assistant_request(context, [], "Who wants coffee?")
 
-        self.assertIn("does not have attendee coffee or lunch availability", response["reply"])
+        self.assertIn("does not have coffee availability data", response["reply"])
+        groq_mock.assert_called_once()
+
+    def test_greeting_uses_groq(self):
+        context = {
+            "user": {"username": "sam", "first_name": "Sam", "interests": [], "looking_for": []},
+            "selected_event": None,
+            "event_attendees": [],
+        }
+
+        with patch("ai.services.assistant_service.generate_chat_completion") as groq_mock:
+            groq_mock.return_value = json.dumps(
+                {
+                    "reply": "Hi Sam! How can I help today?",
+                    "suggestions": [],
+                    "confidence": 0.9,
+                }
+            )
+            response = respond_to_assistant_request(context, [], "Hi!")
+
+        self.assertIn("Hi Sam!", response["reply"])
+        groq_mock.assert_called_once()
+
+    def test_connections_question_uses_groq(self):
+        context = {
+            "user": {"username": "sam", "interests": [], "looking_for": []},
+            "selected_event": None,
+            "event_attendees": [],
+        }
+
+        with patch("ai.services.assistant_service.generate_chat_completion") as groq_mock:
+            groq_mock.return_value = json.dumps(
+                {
+                    "reply": "LinkUp does not have saved connection data yet.",
+                    "suggestions": [],
+                    "confidence": 0.9,
+                }
+            )
+            response = respond_to_assistant_request(context, [], "Who are we connected with?")
+
+        self.assertIn("saved connection data", response["reply"])
+        groq_mock.assert_called_once()
 
 
 class ChatAPITests(APITestCase):
