@@ -44,6 +44,8 @@ AT_USSD_SERVICE_CODE = config(
     "AT_USSD_SERVICE_CODE",
     default=config("AFRICASTALKING_USSD_SERVICE_CODE", default=""),
 )
+GROQ_API_KEY = config("GROQ_API_KEY", default="")
+GROQ_MODEL = config("GROQ_MODEL", default="llama-3.3-70b-versatile")
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (

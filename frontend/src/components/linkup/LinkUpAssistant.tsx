@@ -1,6 +1,12 @@
-import { useNavigate } from "@tanstack/react-router";
-import { ArrowUp, CalendarPlus, Search, Sparkles } from "lucide-react";
-import { type FormEvent, useEffect, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { ArrowUp, Search, Sparkles } from "lucide-react";
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   Drawer,
   DrawerContent,
@@ -8,58 +14,11 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { CommunityCard } from "./CommunityCard";
-import { EventCard } from "./EventCard";
-import { MatchCard, type Match } from "./MatchCard";
-import { PersonCard } from "./PersonCard";
+import { getApiErrors } from "@/services/auth";
+import { aiService } from "@/services/ai";
 
-type AssistantAction =
-  | "open-home"
-  | "open-events"
-  | "open-discover"
-  | "open-connections"
-  | "open-profile"
-  | "open-event"
-  | "create-event"
-  | "edit-profile"
-  | "filter-attendees"
-  | "search-events"
-  | "find-ai-matches";
-
-type AssistantResult =
-  | {
-      kind: "event";
-      message: string;
-      action: AssistantAction;
-      actionLabel: string;
-    }
-  | {
-      kind: "match";
-      message: string;
-      action: AssistantAction;
-      actionLabel: string;
-    }
-  | {
-      kind: "person";
-      message: string;
-      action: AssistantAction;
-      actionLabel: string;
-    }
-  | {
-      kind: "community";
-      message: string;
-      action: AssistantAction;
-      actionLabel: string;
-    }
-  | {
-      kind: "action";
-      message: string;
-      action: AssistantAction;
-      actionLabel: string;
-    };
-
+const AI_SESSION_KEY = "linkup.ai-session-id";
 const SUGGESTIONS = [
   "Find AI founders",
   "Who's having coffee?",
@@ -70,132 +29,79 @@ const SUGGESTIONS = [
   "Show nearby attendees",
 ];
 
-const AI_MATCH: Match = {
-  id: "amina-noor",
-  name: "Amina Noor",
-  profession: "AI Product Lead · Nia Labs",
-  matchPercent: 94,
-  interests: ["Generative AI", "Fintech", "Community"],
-  reason:
-    "Amina is building practical AI products and is looking for founder conversations at the next LinkUp event.",
+type AssistantMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  suggestions?: string[];
 };
 
-function resultFor(query: string): AssistantResult {
-  const normalized = query.toLowerCase();
-
-  if (normalized.includes("home")) {
-    return {
-      kind: "action",
-      message: "Opening your LinkUp home feed.",
-      action: "open-home",
-      actionLabel: "Open Home",
-    };
-  }
-  if (normalized.includes("connections")) {
-    return {
-      kind: "action",
-      message: "Opening your network and connection requests.",
-      action: "open-connections",
-      actionLabel: "Open Connections",
-    };
-  }
-  if (normalized.includes("discover")) {
-    return {
-      kind: "action",
-      message: "Opening Discover for fresh people and communities.",
-      action: "open-discover",
-      actionLabel: "Open Discover",
-    };
-  }
-  if (normalized.includes("open profile")) {
-    return {
-      kind: "action",
-      message: "Opening your LinkUp profile.",
-      action: "open-profile",
-      actionLabel: "Open Profile",
-    };
-  }
-  if (normalized.includes("open events")) {
-    return {
-      kind: "action",
-      message: "Opening your upcoming events.",
-      action: "open-events",
-      actionLabel: "Open Events",
-    };
-  }
-  if (normalized.includes("create")) {
-    return {
-      kind: "action",
-      message: "I’ll take you to Events so you can start a new LinkUp.",
-      action: "create-event",
-      actionLabel: "Create event",
-    };
-  }
-  if (normalized.includes("profile") || normalized.includes("edit")) {
-    return {
-      kind: "action",
-      message: "Your profile is ready for an update.",
-      action: "edit-profile",
-      actionLabel: "Edit profile",
-    };
-  }
-  if (normalized.includes("event") || normalized.includes("tomorrow")) {
-    return {
-      kind: "event",
-      message: "This is the best event match for your network tomorrow.",
-      action: "open-event",
-      actionLabel: "Open event",
-    };
-  }
-  if (
-    normalized.includes("coffee") ||
-    normalized.includes("westlands") ||
-    normalized.includes("nearby")
-  ) {
-    return {
-      kind: "person",
-      message: "Brian is nearby and open to a quick coffee in Westlands.",
-      action: "filter-attendees",
-      actionLabel: "View attendees",
-    };
-  }
-  if (normalized.includes("community")) {
-    return {
-      kind: "community",
-      message: "This community has the strongest overlap with your interests.",
-      action: "open-discover",
-      actionLabel: "Explore community",
-    };
-  }
-  if (normalized.includes("search")) {
-    return {
-      kind: "action",
-      message: "Let’s search upcoming LinkUp events.",
-      action: "search-events",
-      actionLabel: "Search events",
-    };
-  }
-  return {
-    kind: "match",
-    message: "I found an AI founder you should meet next.",
-    action: "find-ai-matches",
-    actionLabel: "See AI matches",
-  };
-}
+const getStoredSessionId = () => {
+  if (typeof window === "undefined") return undefined;
+  return window.sessionStorage.getItem(AI_SESSION_KEY) ?? undefined;
+};
 
 export function LinkUpAssistant() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [result, setResult] = useState<AssistantResult | null>(null);
+  const [sessionId, setSessionId] = useState(getStoredSessionId);
+  const [messages, setMessages] = useState<AssistantMessage[]>([]);
+  const [error, setError] = useState("");
+  const chatMutation = useMutation({ mutationFn: aiService.chat });
 
-  const runQuery = (nextQuery: string) => {
-    const trimmedQuery = nextQuery.trim();
-    if (!trimmedQuery) return;
-    setQuery(trimmedQuery);
-    setResult(resultFor(trimmedQuery));
-  };
+  const latestSuggestions = useMemo(() => {
+    const latestAssistantMessage = [...messages]
+      .reverse()
+      .find((message) => message.role === "assistant");
+    return latestAssistantMessage?.suggestions;
+  }, [messages]);
+
+  const runQuery = useCallback(
+    (nextQuery: string) => {
+      const message = nextQuery.trim();
+      if (!message || chatMutation.isPending) return;
+
+      setQuery("");
+      setError("");
+      setMessages((current) => [
+        ...current,
+        { id: crypto.randomUUID(), role: "user", content: message },
+      ]);
+      chatMutation.mutate(
+        { message, session_id: sessionId },
+        {
+          onSuccess: (response) => {
+            setSessionId(response.session_id);
+            if (typeof window !== "undefined") {
+              window.sessionStorage.setItem(
+                AI_SESSION_KEY,
+                response.session_id,
+              );
+            }
+            setMessages((current) => [
+              ...current,
+              {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content: response.reply,
+                suggestions: response.suggestions,
+              },
+            ]);
+          },
+          onError: (requestError) => {
+            const errors = getApiErrors(requestError);
+            setError(
+              errors.detail ??
+                errors.non_field_errors ??
+                "LinkUp AI is temporarily unavailable.",
+            );
+          },
+        },
+      );
+    },
+    [chatMutation, sessionId],
+  );
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -214,34 +120,7 @@ export function LinkUpAssistant() {
     window.addEventListener("linkup:assistant-prompt", handlePrompt);
     return () =>
       window.removeEventListener("linkup:assistant-prompt", handlePrompt);
-  }, []);
-
-  const performAction = (action: AssistantAction) => {
-    const destinations: Partial<
-      Record<
-        AssistantAction,
-        "/" | "/home" | "/discover" | "/connections" | "/profile"
-      >
-    > = {
-      "open-home": "/home",
-      "open-events": "/",
-      "open-discover": "/discover",
-      "open-connections": "/connections",
-      "open-profile": "/profile",
-      "open-event": "/",
-      "create-event": "/",
-      "edit-profile": "/profile",
-      "filter-attendees": "/discover",
-      "search-events": "/",
-      "find-ai-matches": "/home",
-    };
-    const destination = destinations[action];
-    window.dispatchEvent(
-      new CustomEvent("linkup:assistant-action", { detail: { action } }),
-    );
-    if (destination) void navigate({ to: destination });
-    setOpen(false);
-  };
+  }, [runQuery]);
 
   return (
     <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground>
@@ -272,12 +151,39 @@ export function LinkUpAssistant() {
         </DrawerHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-28">
-          {result ? (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <p className="mb-4 text-sm leading-6 text-muted-foreground">
-                {result.message}
-              </p>
-              <AssistantResultCard result={result} onAction={performAction} />
+          {messages.length ? (
+            <div className="space-y-4 py-2" aria-live="polite">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={
+                    message.role === "user"
+                      ? "ml-10 rounded-3xl rounded-br-md bg-primary px-4 py-3 text-sm leading-6 text-primary-foreground"
+                      : "mr-6 rounded-3xl rounded-bl-md border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-foreground"
+                  }
+                >
+                  {message.content}
+                </div>
+              ))}
+              {chatMutation.isPending && (
+                <div className="mr-20 flex items-center gap-2 rounded-3xl rounded-bl-md border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+                  <Sparkles className="size-4 animate-pulse text-primary" />
+                  LinkUp AI is thinking…
+                </div>
+              )}
+              {error && (
+                <p role="alert" className="text-sm text-destructive">
+                  {error}
+                </p>
+              )}
+              {latestSuggestions &&
+                latestSuggestions.length > 0 &&
+                !chatMutation.isPending && (
+                  <SuggestionButtons
+                    suggestions={latestSuggestions}
+                    onSelect={runQuery}
+                  />
+                )}
             </div>
           ) : (
             <div className="pt-2">
@@ -293,18 +199,10 @@ export function LinkUpAssistant() {
               <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 Try asking
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {SUGGESTIONS.map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    onClick={() => runQuery(suggestion)}
-                    className="min-h-11 rounded-full border border-border bg-card px-3 text-left text-xs font-semibold text-primary shadow-sm transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/25 hover:bg-primary/5 hover:shadow-[var(--shadow-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.97]"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
+              <SuggestionButtons
+                suggestions={SUGGESTIONS}
+                onSelect={runQuery}
+              />
             </div>
           )}
         </div>
@@ -322,12 +220,14 @@ export function LinkUpAssistant() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Ask anything..."
-              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              disabled={chatMutation.isPending}
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
             />
             <button
               type="submit"
+              disabled={chatMutation.isPending || !query.trim()}
               aria-label="Send question"
-              className="gradient-brand flex size-11 shrink-0 items-center justify-center rounded-xl text-primary-foreground shadow-sm transition-transform duration-300 ease-out motion-reduce:transition-none hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97]"
+              className="gradient-brand flex size-11 shrink-0 items-center justify-center rounded-xl text-primary-foreground shadow-sm transition-transform duration-300 ease-out motion-reduce:transition-none hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <ArrowUp className="size-4" aria-hidden="true" />
             </button>
@@ -338,91 +238,25 @@ export function LinkUpAssistant() {
   );
 }
 
-function AssistantResultCard({
-  result,
-  onAction,
+function SuggestionButtons({
+  suggestions,
+  onSelect,
 }: {
-  result: AssistantResult;
-  onAction: (action: AssistantAction) => void;
+  suggestions: string[];
+  onSelect: (suggestion: string) => void;
 }) {
-  const actionButton = (className?: string) => (
-    <button
-      type="button"
-      onClick={() => onAction(result.action)}
-      className={cn(
-        "inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.97]",
-        className,
-      )}
-    >
-      {result.actionLabel}
-    </button>
-  );
-
-  if (result.kind === "event")
-    return (
-      <div className="space-y-3">
-        <EventCard
-          title="AI Builders Nairobi"
-          location="The Alchemist, Westlands"
-          day="Tomorrow"
-          time="6:30 PM"
-          attendees={184}
-          coverImage="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1000&q=85"
-          onEnter={() => onAction(result.action)}
-        />
-        {actionButton("w-full")}
-      </div>
-    );
-  if (result.kind === "match")
-    return (
-      <div className="space-y-3">
-        <MatchCard match={AI_MATCH} onConnect={() => onAction(result.action)} />
-        {actionButton("w-full")}
-      </div>
-    );
-  if (result.kind === "person")
-    return (
-      <PersonCard
-        name="Brian Otieno"
-        subtitle="AI Founder · 4 min away in Westlands"
-        action={
-          <span className="rounded-full bg-success/15 px-2.5 py-1 text-[10px] font-bold text-success">
-            Available
-          </span>
-        }
-      >
-        <p className="text-sm leading-5 text-muted-foreground">
-          Open to a coffee and founder conversations until 4:30 PM.
-        </p>
-        <div className="mt-4">{actionButton()}</div>
-      </PersonCard>
-    );
-  if (result.kind === "community")
-    return (
-      <CommunityCard
-        title="Nairobi AI Builders"
-        description="A welcoming community for founders, engineers, and AI product people."
-        members={[
-          "Amina Noor",
-          "Brian Otieno",
-          "David Mwangi",
-          "Sarah Wanjiku",
-        ]}
-        action={actionButton()}
-      />
-    );
   return (
-    <div className="surface-card rounded-3xl border border-border/70 p-5">
-      <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-        <CalendarPlus className="size-5" />
-      </div>
-      <p className="mt-4 font-display text-base font-semibold text-foreground">
-        Ready when you are
-      </p>
-      <p className="mt-1 text-sm leading-5 text-muted-foreground">
-        I’ll keep your next networking step simple and focused.
-      </p>
-      <div className="mt-4">{actionButton()}</div>
+    <div className="mt-3 flex flex-wrap gap-2">
+      {suggestions.map((suggestion) => (
+        <button
+          key={suggestion}
+          type="button"
+          onClick={() => onSelect(suggestion)}
+          className="min-h-11 rounded-full border border-border bg-card px-3 text-left text-xs font-semibold text-primary shadow-sm transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/25 hover:bg-primary/5 hover:shadow-[var(--shadow-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.97]"
+        >
+          {suggestion}
+        </button>
+      ))}
     </div>
   );
 }

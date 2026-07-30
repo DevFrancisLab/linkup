@@ -15,6 +15,8 @@ const ACTIONS = [
     icon: Coffee,
     title: "Grab Coffee",
     description: "Meet attendees having coffee right now.",
+    prompt:
+      "Find attendees at my current event who are interested in grabbing coffee.",
     tint: "bg-amber-100 text-amber-700",
   },
   {
@@ -22,6 +24,7 @@ const ACTIONS = [
     icon: Handshake,
     title: "Continue Networking",
     description: "Meet people with shared interests.",
+    prompt: "Recommend three people I should connect with at my current event.",
     tint: "bg-primary/10 text-primary",
   },
   {
@@ -29,6 +32,7 @@ const ACTIONS = [
     icon: Car,
     title: "Share Ride",
     description: "Find attendees travelling in your direction.",
+    prompt: "Find attendees travelling to the same destination.",
     tint: "bg-accent/15 text-accent-foreground",
   },
   {
@@ -36,6 +40,7 @@ const ACTIONS = [
     icon: PartyPopper,
     title: "After Party",
     description: "Discover people heading to post-event gatherings.",
+    prompt: "Find attendees interested in post-event gatherings.",
     tint: "bg-secondary/10 text-secondary",
   },
   {
@@ -43,6 +48,8 @@ const ACTIONS = [
     icon: BriefcaseBusiness,
     title: "Find Opportunities",
     description: "Meet recruiters, founders and collaborators.",
+    prompt:
+      "Recommend attendees I should meet for career or startup opportunities.",
     tint: "bg-success/15 text-success",
   },
 ];
@@ -88,7 +95,7 @@ export function WhatsNextCard({ onIntentSubmit }: WhatsNextCardProps) {
               aria-pressed={isSelected}
               onClick={() => {
                 setSelectedId(action.id);
-                submitIntent(action.title);
+                submitIntent(action.prompt);
               }}
               aria-label={`${action.title}. ${action.description}`}
               className={cn(

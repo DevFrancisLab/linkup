@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/events/', include('events.urls')),
+    path('api/ai/', include('ai.urls')),
     path('api/integrations/', include('integrations.africastalking.urls')),
     path('ussd', UssdCallbackView.as_view(), name='africastalking-ussd'),
 ]
