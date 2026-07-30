@@ -178,8 +178,12 @@ function AuthPage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-88 bg-[radial-gradient(circle_at_50%_0%,oklch(0.546_0.215_262.9_/_0.2),transparent_66%)]" />
       <div className="pointer-events-none absolute -right-24 top-44 size-64 rounded-full bg-secondary/10 blur-3xl" />
       <div className="relative mx-auto w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <div className="flex size-12 items-center justify-center rounded-2xl gradient-brand text-primary-foreground shadow-[var(--shadow-raised)]">
-          <Sparkles className="size-5" aria-hidden="true" />
+        <div className="flex size-12 items-center justify-center overflow-hidden rounded-2xl bg-card shadow-[var(--shadow-raised)]">
+          <img
+            src="/linkuplogo.png"
+            alt="LinkUp"
+            className="size-full object-contain"
+          />
         </div>
         <header className="mt-7">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">

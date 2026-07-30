@@ -1,7 +1,10 @@
 from datetime import timedelta
+from io import BytesIO
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -15,6 +18,16 @@ class AuthenticationAPITests(APITestCase):
     profile_url = "/api/auth/profile/"
     refresh_url = "/api/auth/token/refresh/"
     logout_url = "/api/auth/logout/"
+
+    @staticmethod
+    def image_file(name, image_format, content_type):
+        image_buffer = BytesIO()
+        Image.new("RGB", (1, 1), color="blue").save(image_buffer, image_format)
+        return SimpleUploadedFile(
+            name,
+            image_buffer.getvalue(),
+            content_type=content_type,
+        )
 
     def register_user(self):
         response = self.client.post(
@@ -104,6 +117,68 @@ class AuthenticationAPITests(APITestCase):
         profile_response = self.client.get(self.profile_url)
         self.assertEqual(profile_response.status_code, status.HTTP_200_OK)
         self.assertEqual(profile_response.data["company"], "LinkUp")
+
+        patch_response = self.client.patch(
+            self.profile_url,
+            {
+                "bio": "Building LinkUp.",
+                "interests": ["AI", "Product"],
+                "looking_for": ["Collaborators"],
+            },
+            format="json",
+        )
+        self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(patch_response.data["bio"], "Building LinkUp.")
+        self.assertEqual(patch_response.data["interests"], ["AI", "Product"])
+        self.assertEqual(patch_response.data["looking_for"], ["Collaborators"])
+
+    def test_profile_avatar_upload_and_removal(self):
+        self.register_user()
+        login_response = self.client.post(
+            self.login_url,
+            {"identifier": "francis", "password": "secure-password-123"},
+            format="json",
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {login_response.data['access']}"
+        )
+        avatar = self.image_file("avatar.png", "PNG", "image/png")
+
+        upload_response = self.client.patch(
+            self.profile_url,
+            {"avatar": avatar},
+            format="multipart",
+        )
+        self.assertEqual(upload_response.status_code, status.HTTP_200_OK)
+        self.assertIn("/media/avatars/avatar", upload_response.data["avatar"])
+
+        remove_response = self.client.patch(
+            self.profile_url,
+            {"avatar": None},
+            format="json",
+        )
+        self.assertEqual(remove_response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(remove_response.data["avatar"])
+
+    def test_profile_rejects_invalid_avatar_type(self):
+        self.register_user()
+        login_response = self.client.post(
+            self.login_url,
+            {"identifier": "francis", "password": "secure-password-123"},
+            format="json",
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {login_response.data['access']}"
+        )
+        avatar = self.image_file("avatar.gif", "GIF", "image/gif")
+
+        response = self.client.patch(
+            self.profile_url,
+            {"avatar": avatar},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["avatar"][0], "Use a JPEG, PNG, or WebP image.")
 
     def test_refresh_and_logout_blacklists_token(self):
         self.register_user()

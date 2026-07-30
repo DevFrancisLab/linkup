@@ -2,11 +2,15 @@ from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from PIL import Image, UnidentifiedImageError
 from rest_framework import serializers
 
 from .models import UserProfile
 
 User = get_user_model()
+
+MAX_AVATAR_SIZE = 5 * 1024 * 1024
+ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -15,6 +19,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source="user.first_name", allow_blank=True)
     last_name = serializers.CharField(source="user.last_name", allow_blank=True)
     email = serializers.EmailField(source="user.email", allow_blank=True)
+    interests = serializers.ListField(
+        child=serializers.CharField(max_length=100),
+        required=False,
+    )
+    looking_for = serializers.ListField(
+        child=serializers.CharField(max_length=100),
+        required=False,
+    )
 
     class Meta:
         model = UserProfile
@@ -28,6 +40,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "profession",
             "company",
             "bio",
+            "interests",
+            "looking_for",
             "avatar",
         )
         extra_kwargs = {
@@ -50,13 +64,38 @@ class UserProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This email address is already in use.")
         return value
 
+    def validate_avatar(self, value):
+        if value is None:
+            return value
+        if value.size > MAX_AVATAR_SIZE:
+            raise serializers.ValidationError("Avatar must be 5 MB or smaller.")
+        if value.content_type not in ALLOWED_AVATAR_TYPES:
+            raise serializers.ValidationError("Use a JPEG, PNG, or WebP image.")
+        try:
+            Image.open(value).verify()
+        except (UnidentifiedImageError, OSError) as error:
+            raise serializers.ValidationError("Upload a valid image file.") from error
+        finally:
+            value.seek(0)
+        return value
+
     @transaction.atomic
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})
+        avatar_changed = "avatar" in validated_data
+        previous_avatar_name = instance.avatar.name
+        avatar_storage = instance.avatar.storage
         for field, value in user_data.items():
             setattr(instance.user, field, value)
         instance.user.save()
-        return super().update(instance, validated_data)
+        profile = super().update(instance, validated_data)
+        if (
+            avatar_changed
+            and previous_avatar_name
+            and previous_avatar_name != profile.avatar.name
+        ):
+            avatar_storage.delete(previous_avatar_name)
+        return profile
 
 
 class RegisterSerializer(serializers.Serializer):

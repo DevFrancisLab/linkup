@@ -6,7 +6,7 @@ import {
   Sparkles,
   UserRound,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { getApiErrors } from "@/services/auth";
@@ -87,16 +87,26 @@ function SelectableChips({
 
 function CompleteProfilePage() {
   const navigate = useNavigate();
-  const { updateProfile } = useAuth();
-  const [photoUrl, setPhotoUrl] = useState<string>();
+  const { user, updateProfile } = useAuth();
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(
+    user?.avatar ?? undefined,
+  );
   const [avatar, setAvatar] = useState<File>();
-  const [profession, setProfession] = useState("");
-  const [company, setCompany] = useState("");
-  const [bio, setBio] = useState("");
+  const [profession, setProfession] = useState(user?.profession ?? "");
+  const [company, setCompany] = useState(user?.company ?? "");
+  const [bio, setBio] = useState(user?.bio ?? "");
   const [interests, setInterests] = useState<string[]>([]);
   const [lookingFor, setLookingFor] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    setPhotoUrl(user.avatar ?? undefined);
+    setProfession(user.profession);
+    setCompany(user.company);
+    setBio(user.bio);
+  }, [user]);
 
   const uploadPhoto = (file?: File) => {
     if (!file) return;
@@ -115,6 +125,10 @@ function CompleteProfilePage() {
       profile.set("profession", profession.trim());
       profile.set("company", company.trim());
       profile.set("bio", bio.trim());
+      interests.forEach((interest) => profile.append("interests", interest));
+      lookingFor.forEach((preference) =>
+        profile.append("looking_for", preference),
+      );
       if (avatar) profile.set("avatar", avatar);
       await updateProfile(profile);
       await navigate({ to: "/home" });

@@ -129,8 +129,8 @@ export function WhatsNextCard({ onIntentSubmit }: WhatsNextCardProps) {
               AI Recommendation
             </p>
             <p className="mt-1 text-xs font-medium leading-5 text-muted-foreground">
-              Based on your interests, 5 AI founders nearby are currently
-              looking for collaborators.
+              Ask LinkUp AI to find relevant people, events, and networking
+              opportunities.
             </p>
             <button
               type="button"

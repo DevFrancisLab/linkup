@@ -9,6 +9,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 import { CommunityCard } from "./CommunityCard";
 import { EventCard } from "./EventCard";
 import { MatchCard, type Match } from "./MatchCard";
@@ -184,6 +185,7 @@ function resultFor(query: string): AssistantResult {
 
 export function LinkUpAssistant() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<AssistantResult | null>(null);
@@ -264,7 +266,8 @@ export function LinkUpAssistant() {
             LinkUp AI
           </DrawerTitle>
           <DrawerDescription className="ml-11 text-sm font-medium">
-            Your AI networking concierge.
+            Your AI networking concierge
+            {user?.first_name ? `, ${user.first_name}` : ""}.
           </DrawerDescription>
         </DrawerHeader>
 

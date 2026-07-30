@@ -9,6 +9,7 @@ const sizes = {
 
 interface AvatarPlaceholderProps {
   name: string;
+  imageUrl?: string | null;
   size?: keyof typeof sizes;
   className?: string;
   ring?: boolean;
@@ -17,6 +18,7 @@ interface AvatarPlaceholderProps {
 /** Simple circular avatar placeholder built from initials — no photos. */
 export function AvatarPlaceholder({
   name,
+  imageUrl,
   size = "md",
   className,
   ring = false,
@@ -40,7 +42,11 @@ export function AvatarPlaceholder({
         className,
       )}
     >
-      {initials}
+      {imageUrl ? (
+        <img src={imageUrl} alt="" className="size-full object-cover" />
+      ) : (
+        initials
+      )}
     </div>
   );
 }

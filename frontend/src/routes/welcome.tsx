@@ -69,8 +69,14 @@ function WelcomePage() {
     <main className="relative min-h-screen overflow-hidden bg-background px-5 pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-8">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-100 bg-[radial-gradient(circle_at_50%_0%,oklch(0.546_0.215_262.9_/_0.2),transparent_66%)]" />
       <div className="relative mx-auto w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <p className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
-          <Sparkles className="size-3.5" aria-hidden="true" />
+        <div className="flex justify-center">
+          <img
+            src="/linkuplogo.png"
+            alt="LinkUp"
+            className="size-12 rounded-2xl object-contain shadow-[var(--shadow-raised)]"
+          />
+        </div>
+        <p className="mt-3 text-center text-xs font-bold uppercase tracking-[0.18em] text-primary">
           Welcome to LinkUp
         </p>
         <div className="mt-5">

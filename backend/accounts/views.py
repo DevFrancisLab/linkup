@@ -80,6 +80,12 @@ class ProfileView(APIView):
         return Response(serializer.data)
 
     def put(self, request):
+        return self.update_profile(request)
+
+    def patch(self, request):
+        return self.update_profile(request)
+
+    def update_profile(self, request):
         serializer = UserProfileSerializer(
             self.get_profile(),
             data=request.data,

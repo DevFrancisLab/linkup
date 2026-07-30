@@ -111,7 +111,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           rel: "stylesheet",
           href: appCss,
         },
-        { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+        { rel: "icon", href: "/linkuplogo.png", type: "image/png" },
       ],
     }),
     shellComponent: RootShell,
@@ -153,7 +153,7 @@ function AuthenticatedApp() {
     select: (state) => state.location.pathname,
   });
   const { isAuthenticated, isLoading } = useAuth();
-  const isPublicRoute = pathname === "/auth" || pathname === "/welcome";
+  const isPublicRoute = pathname === "/auth";
 
   useEffect(() => {
     if (isLoading) return;

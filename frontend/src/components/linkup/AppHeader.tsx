@@ -3,6 +3,7 @@ import { AvatarPlaceholder } from "./Avatar";
 
 export interface AppHeaderProps {
   name: string;
+  avatarUrl?: string | null;
   greeting: string;
   notificationCount?: number;
   onNotificationsClick?: () => void;
@@ -10,6 +11,7 @@ export interface AppHeaderProps {
 
 export function AppHeader({
   name,
+  avatarUrl,
   greeting,
   notificationCount = 0,
   onNotificationsClick,
@@ -18,6 +20,7 @@ export function AppHeader({
     <header className="flex items-center gap-3 px-5 pb-5 pt-6">
       <AvatarPlaceholder
         name={name}
+        imageUrl={avatarUrl}
         size="lg"
         ring
         className="shadow-[0_5px_14px_oklch(0.546_0.215_262.9_/_0.18)]"

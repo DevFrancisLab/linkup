@@ -1,4 +1,4 @@
-import { Link2, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 interface SplashScreenProps {
   isLeaving?: boolean;
@@ -17,9 +17,11 @@ export function SplashScreen({ isLeaving = false }: SplashScreenProps) {
 
       <div className="relative mx-auto flex w-full max-w-md flex-col items-center justify-center pb-[env(safe-area-inset-bottom)] text-center">
         <div className="flex size-24 items-center justify-center rounded-[2rem] border border-primary-foreground/20 bg-card/15 shadow-[0_12px_36px_oklch(0.21_0.035_258_/_0.32)] backdrop-blur-md animate-in zoom-in-95 duration-500">
-          <div className="flex size-16 items-center justify-center rounded-[1.35rem] bg-card text-primary shadow-[0_8px_18px_oklch(0.21_0.035_258_/_0.2)]">
-            <Link2 className="size-8" strokeWidth={2.4} aria-hidden="true" />
-          </div>
+          <img
+            src="/linkuplogo.png"
+            alt="LinkUp"
+            className="size-16 rounded-[1.35rem] object-contain shadow-[0_8px_18px_oklch(0.21_0.035_258_/_0.2)]"
+          />
         </div>
         <div className="mt-7 animate-in fade-in slide-in-from-bottom-2 duration-500 [animation-delay:150ms]">
           <p className="flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/70">

@@ -22,6 +22,10 @@ class UserProfile(models.Model):
 
     bio = models.TextField(blank=True)
 
+    interests = models.JSONField(default=list, blank=True)
+
+    looking_for = models.JSONField(default=list, blank=True)
+
     avatar = models.ImageField(
         upload_to="avatars/",
         blank=True,

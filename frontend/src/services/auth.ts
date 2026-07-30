@@ -11,6 +11,8 @@ export interface AuthUser {
   profession: string;
   company: string;
   bio: string;
+  interests: string[];
+  looking_for: string[];
   avatar: string | null;
 }
 
@@ -77,8 +79,18 @@ export const authService = {
     return response.data;
   },
 
-  async updateProfile(payload: Partial<AuthUser> | FormData) {
+  async replaceProfile(payload: Partial<AuthUser> | FormData) {
     const response = await api.put<AuthUser>("/auth/profile/", payload, {
+      headers:
+        payload instanceof FormData
+          ? { "Content-Type": "multipart/form-data" }
+          : undefined,
+    });
+    return response.data;
+  },
+
+  async updateProfile(payload: Partial<AuthUser> | FormData) {
+    const response = await api.patch<AuthUser>("/auth/profile/", payload, {
       headers:
         payload instanceof FormData
           ? { "Content-Type": "multipart/form-data" }
