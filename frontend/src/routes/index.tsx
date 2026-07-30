@@ -400,7 +400,10 @@ function EventsPage() {
         activeId={activeNavigation}
         onChange={(id) => {
           setActiveNavigation(id);
+          if (id === "home") void navigate({ to: "/home" });
           if (id === "discover") void navigate({ to: "/discover" });
+          if (id === "connections") void navigate({ to: "/connections" });
+          if (id === "profile") void navigate({ to: "/profile" });
         }}
       />
     </div>

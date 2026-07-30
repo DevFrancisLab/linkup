@@ -414,7 +414,10 @@ function DiscoverPage() {
       <BottomNavigation
         activeId="discover"
         onChange={(id) => {
+          if (id === "home") void navigate({ to: "/home" });
           if (id === "events") void navigate({ to: "/" });
+          if (id === "connections") void navigate({ to: "/connections" });
+          if (id === "profile") void navigate({ to: "/profile" });
         }}
       />
     </div>
