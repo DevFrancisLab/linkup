@@ -28,6 +28,22 @@ CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS",
     "http://localhost:5173,http://localhost:8080",
 )
+AT_USERNAME = config(
+    "AT_USERNAME",
+    default=config("AFRICASTALKING_USERNAME", default=""),
+)
+AT_API_KEY = config(
+    "AT_API_KEY",
+    default=config("AFRICASTALKING_API_KEY", default=""),
+)
+AT_SENDER_ID = config(
+    "AT_SENDER_ID",
+    default=config("AFRICASTALKING_SENDER_ID", default=""),
+)
+AT_USSD_SERVICE_CODE = config(
+    "AT_USSD_SERVICE_CODE",
+    default=config("AFRICASTALKING_USSD_SERVICE_CODE", default=""),
+)
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (

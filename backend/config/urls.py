@@ -18,11 +18,14 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
+from integrations.africastalking.views import UssdCallbackView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/events/', include('events.urls')),
+    path('api/integrations/', include('integrations.africastalking.urls')),
+    path('ussd', UssdCallbackView.as_view(), name='africastalking-ussd'),
 ]
 
 if settings.DEBUG:
