@@ -1,7 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppHeader } from "@/components/linkup/AppHeader";
 import { BottomNavigation } from "@/components/linkup/BottomNavigation";
-import { EmptyState } from "@/components/linkup/EmptyState";
+import { SecondaryButton } from "@/components/linkup/Button";
+import { EventCard } from "@/components/linkup/EventCard";
+import { MatchCard, type Match } from "@/components/linkup/MatchCard";
+import { RecentActivity } from "@/components/linkup/RecentActivity";
+import { SectionHeading } from "@/components/linkup/SectionHeading";
 import { WhatsNextCard } from "@/components/linkup/WhatsNextCard";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -12,10 +17,33 @@ export const Route = createFileRoute("/home")({
   component: HomeDashboard,
 });
 
+const MATCHES: Match[] = [
+  {
+    id: "brian",
+    name: "Brian Otieno",
+    profession: "AI Founder",
+    matchPercent: 96,
+    interests: ["AI Startups", "LLMs", "Fundraising"],
+    reason:
+      "Recommended because you both build AI startups and are looking to network at the hackathon today.",
+  },
+  {
+    id: "sarah",
+    name: "Sarah Wanjiku",
+    profession: "Product Designer",
+    matchPercent: 91,
+    interests: ["Design Systems", "Fintech", "Prototyping"],
+    reason:
+      "Recommended because you both build consumer products and share an interest in fast, collaborative prototyping.",
+  },
+];
+
 function HomeDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [showAllMatches, setShowAllMatches] = useState(false);
   const displayName = user?.first_name || user?.username || "there";
+  const visibleMatches = showAllMatches ? MATCHES : MATCHES.slice(0, 1);
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,13 +54,37 @@ function HomeDashboard() {
           greeting="Good evening"
         />
         <main className="flex flex-col gap-8 px-5 pb-3">
-          <WhatsNextCard />
-          <section className="surface-card rounded-3xl border border-dashed border-border/70 p-5">
-            <EmptyState
-              title="Your event activity will appear here"
-              description="Join an event to see attendees, matches, and networking updates."
+          <EventCard
+            title="Matchmakers Hackathon Nairobi"
+            location="Nairobi, Kenya"
+            day="Today"
+            attendees={234}
+          />
+          <section>
+            <SectionHeading
+              title="Your AI Matches"
+              action={
+                <SecondaryButton
+                  aria-controls="ai-matches"
+                  aria-expanded={showAllMatches}
+                  onClick={() => setShowAllMatches((previous) => !previous)}
+                  className="px-2"
+                >
+                  {showAllMatches ? "Show less" : `See all (${MATCHES.length})`}
+                </SecondaryButton>
+              }
             />
+            <p className="-mt-1 mb-4 px-1 text-sm text-muted-foreground">
+              People AI thinks you should meet at this event.
+            </p>
+            <div id="ai-matches" className="flex flex-col gap-4">
+              {visibleMatches.map((match) => (
+                <MatchCard key={match.id} match={match} />
+              ))}
+            </div>
           </section>
+          <WhatsNextCard />
+          <RecentActivity />
         </main>
       </div>
       <BottomNavigation
