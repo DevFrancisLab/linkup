@@ -7,7 +7,7 @@ interface SectionHeadingProps {
 
 export function SectionHeading({ title, action }: SectionHeadingProps) {
   return (
-    <div className="mb-3 flex items-center justify-between px-1">
+    <div className="mb-3.5 flex min-h-8 items-center justify-between px-1">
       <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
         {title}
       </h2>

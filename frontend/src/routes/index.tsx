@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { ActiveEventCard } from "@/components/linkup/ActiveEventCard";
 import { BottomNav } from "@/components/linkup/BottomNav";
 import { DashboardHeader } from "@/components/linkup/DashboardHeader";
@@ -16,7 +17,10 @@ export const Route = createFileRoute("/")({
         content:
           "LinkUp helps event attendees find meaningful connections with AI matches, shared interests and instant meetups.",
       },
-      { property: "og:title", content: "LinkUp — AI Matches for Event Attendees" },
+      {
+        property: "og:title",
+        content: "LinkUp — AI Matches for Event Attendees",
+      },
       {
         property: "og:description",
         content:
@@ -36,7 +40,8 @@ const MATCHES: Match[] = [
     profession: "AI Founder",
     matchPercent: 96,
     interests: ["AI Startups", "LLMs", "Fundraising"],
-    reason: "Both interested in AI startups.",
+    reason:
+      "Recommended because you both build AI startups and are looking to network at the hackathon today.",
   },
   {
     id: "sarah",
@@ -44,17 +49,25 @@ const MATCHES: Match[] = [
     profession: "Product Designer",
     matchPercent: 91,
     interests: ["Design Systems", "Fintech", "Prototyping"],
-    reason: "You both build consumer products in Nairobi.",
+    reason:
+      "Recommended because you both build consumer products and share an interest in fast, collaborative prototyping.",
   },
 ];
 
 function HomeDashboard() {
+  const [showAllMatches, setShowAllMatches] = useState(false);
+  const visibleMatches = showAllMatches ? MATCHES : MATCHES.slice(0, 1);
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto flex min-h-screen max-w-md flex-col pb-28">
-        <DashboardHeader name="Francis" greeting="Good evening" notificationCount={3} />
+      <div className="mx-auto flex min-h-screen max-w-md flex-col pb-32">
+        <DashboardHeader
+          name="Francis"
+          greeting="Good evening"
+          notificationCount={3}
+        />
 
-        <main className="flex flex-col gap-6 px-5">
+        <main className="flex flex-col gap-7 px-5 pb-2">
           <ActiveEventCard
             title="Matchmakers Hackathon Nairobi"
             location="Nairobi, Kenya"
@@ -68,14 +81,20 @@ function HomeDashboard() {
               action={
                 <button
                   type="button"
-                  className="text-sm font-medium text-primary"
+                  aria-controls="ai-matches"
+                  aria-expanded={showAllMatches}
+                  onClick={() => setShowAllMatches((previous) => !previous)}
+                  className="min-h-11 rounded-xl px-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:bg-primary/12"
                 >
-                  See all
+                  {showAllMatches ? "Show less" : `See all (${MATCHES.length})`}
                 </button>
               }
             />
-            <div className="flex flex-col gap-4">
-              {MATCHES.map((match) => (
+            <p className="-mt-1 mb-4 px-1 text-sm text-muted-foreground">
+              People AI thinks you should meet at this event.
+            </p>
+            <div id="ai-matches" className="flex flex-col gap-4">
+              {visibleMatches.map((match) => (
                 <MatchCard key={match.id} match={match} />
               ))}
             </div>

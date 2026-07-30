@@ -4,6 +4,7 @@ const sizes = {
   sm: "size-10 text-sm",
   md: "size-12 text-base",
   lg: "size-14 text-lg",
+  xl: "size-16 text-xl",
 } as const;
 
 interface AvatarPlaceholderProps {
@@ -20,12 +21,13 @@ export function AvatarPlaceholder({
   className,
   ring = false,
 }: AvatarPlaceholderProps) {
-  const initials = name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+  const initials =
+    name
+      .split(" ")
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?";
 
   return (
     <div
