@@ -13,6 +13,8 @@ export type { EventCardProps } from "./EventCard";
 export { FilterChips } from "./FilterChips";
 export type { FilterChipOption } from "./FilterChips";
 export { LoadingSkeleton } from "./LoadingSkeleton";
+export { LinkUpAssistant } from "./LinkUpAssistant";
+export { SplashScreen } from "./SplashScreen";
 export { MatchCard } from "./MatchCard";
 export type { Match } from "./MatchCard";
 export { PersonCard } from "./PersonCard";

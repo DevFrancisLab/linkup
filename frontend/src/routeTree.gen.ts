@@ -10,14 +10,27 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
 import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompleteProfileRoute = CompleteProfileRouteImport.update({
+  id: '/complete-profile',
+  path: '/complete-profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConnectionsRoute = ConnectionsRouteImport.update({
@@ -40,43 +53,85 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/complete-profile': typeof CompleteProfileRoute
   '/connections': typeof ConnectionsRoute
   '/discover': typeof DiscoverRoute
   '/home': typeof HomeRoute
   '/profile': typeof ProfileRoute
+  '/welcome': typeof WelcomeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/complete-profile': typeof CompleteProfileRoute
   '/connections': typeof ConnectionsRoute
   '/discover': typeof DiscoverRoute
   '/home': typeof HomeRoute
   '/profile': typeof ProfileRoute
+  '/welcome': typeof WelcomeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/complete-profile': typeof CompleteProfileRoute
   '/connections': typeof ConnectionsRoute
   '/discover': typeof DiscoverRoute
   '/home': typeof HomeRoute
   '/profile': typeof ProfileRoute
+  '/welcome': typeof WelcomeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/connections' | '/discover' | '/home' | '/profile'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/complete-profile'
+    | '/connections'
+    | '/discover'
+    | '/home'
+    | '/profile'
+    | '/welcome'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/connections' | '/discover' | '/home' | '/profile'
-  id: '__root__' | '/' | '/connections' | '/discover' | '/home' | '/profile'
+  to:
+    | '/'
+    | '/auth'
+    | '/complete-profile'
+    | '/connections'
+    | '/discover'
+    | '/home'
+    | '/profile'
+    | '/welcome'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/complete-profile'
+    | '/connections'
+    | '/discover'
+    | '/home'
+    | '/profile'
+    | '/welcome'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  CompleteProfileRoute: typeof CompleteProfileRoute
   ConnectionsRoute: typeof ConnectionsRoute
   DiscoverRoute: typeof DiscoverRoute
   HomeRoute: typeof HomeRoute
   ProfileRoute: typeof ProfileRoute
+  WelcomeRoute: typeof WelcomeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -86,6 +141,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/complete-profile': {
+      id: '/complete-profile'
+      path: '/complete-profile'
+      fullPath: '/complete-profile'
+      preLoaderRoute: typeof CompleteProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/connections': {
@@ -116,15 +185,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  CompleteProfileRoute: CompleteProfileRoute,
   ConnectionsRoute: ConnectionsRoute,
   DiscoverRoute: DiscoverRoute,
   HomeRoute: HomeRoute,
   ProfileRoute: ProfileRoute,
+  WelcomeRoute: WelcomeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

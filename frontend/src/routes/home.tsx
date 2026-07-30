@@ -44,7 +44,7 @@ function HomeDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto flex min-h-screen max-w-md flex-col pb-32">
+      <div className="mx-auto flex min-h-screen max-w-md flex-col pb-40">
         <AppHeader
           name="Francis"
           greeting="Good evening"
