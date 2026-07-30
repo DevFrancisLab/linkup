@@ -12,6 +12,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { LinkUpAssistant } from "@/components/linkup/LinkUpAssistant";
 import { SplashScreen } from "@/components/linkup/SplashScreen";
+import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -177,6 +178,7 @@ function AuthenticatedApp() {
     <>
       <Outlet />
       {isAuthenticated && <LinkUpAssistant />}
+      <Toaster />
     </>
   );
 }
