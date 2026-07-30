@@ -16,13 +16,18 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def env_list(name, default):
+    return [item.strip() for item in config(name, default=default).split(",") if item.strip()]
+
+
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default="false").lower() == "true"
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
-CORS_ALLOWED_ORIGINS = config(
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
+CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:5173,http://localhost:8080",
-).split(",")
+    "http://localhost:5173,http://localhost:8080",
+)
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -63,6 +68,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'accounts.apps.AccountsConfig',
+    'events.apps.EventsConfig',
+    'networking.apps.NetworkingConfig',
+    'ai.apps.AiConfig',
 ]
 
 MIDDLEWARE = [
@@ -141,6 +149,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
