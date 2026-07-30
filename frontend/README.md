@@ -3,7 +3,7 @@
 ## Deploy to Vercel with Bun
 
 1. Import this repository into Vercel and set the **Root Directory** to `frontend`.
-2. Vercel uses `bun.lock`, `packageManager`, and `vercel.json` to install with Bun and run `bun run build`.
+2. Vercel uses `bun.lock`, `packageManager`, and `vercel.json` to install with Bun and run `bun run build`. The Vercel-only install command bypasses Bun's release-age guard for the already-locked dependency set; local installs retain that guard.
 3. Add `VITE_API_URL` in Vercel Project Settings → Environment Variables. It must be the public Django API URL including `/api`, for example `https://api.example.com/api`.
 4. Configure the Django deployment's CORS allowed origins to include the Vercel URL.
 
